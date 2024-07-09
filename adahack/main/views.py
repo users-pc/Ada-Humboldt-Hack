@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from django.shortcuts import redirect
 
 # Funktionert bisher nur auf https://universalviewer.io/
 # In diesem Video wird gezeigt, wie man manuell jeden schritt durchgehen kann: https://www.youtube.com/watch?v=u63jHDH3pDM
@@ -25,6 +26,7 @@ def index(request):
             # Create a IIIFManifest instance
             manifest = IIIFManifest(manifest=manifest_data, filename=filename, file=file_name)
             manifest.save()
+            return redirect('link', pk=manifest.pk)
         elif file:
             # Read the content of the uploaded file directly
             file_content = file.read().decode('utf-8')  # Assuming the file content is UTF-8 encoded
@@ -35,11 +37,12 @@ def index(request):
             # Create a IIIFManifest instance
             manifest = IIIFManifest(manifest=manifest_data, filename=filename, file=file_name)
             manifest.save()
+            return redirect('link', pk=manifest.pk)
         else:
             messages.error(request, 'Kein Manifest oder Datei hochgeladen. Bitte versuchen Sie es erneut.')
             return render(request, 'main/index.html')
         
-    return render(request, 'main/index.html')
+    return render(request, 'main/index.html', {'active': 'index'})
 
 @api_view(['GET'])
 def api_link(request, pk):
@@ -52,10 +55,41 @@ def api_link(request, pk):
 
 def link(request, pk):
     manifest = IIIFManifest.objects.get(pk=pk)
+    link = manifest.file.url
     context = {
-        'manifest': manifest
-    }
+        'manifest': manifest,   
+        'link': link, 
+        }
+    if request.method == "POST":
+        # bearbeiten von manifest.file 
+        m = request.POST.get('manifest')
+        if request.FILES.get('file'):
+            manifest.file.delete()
+            manifest.file = request.FILES.get('file')
+            manifest.save()
+            messages.success(request, 'Manifest erfolgreich bearbeitet.')
+            return redirect('link', pk=manifest.pk)
+        if m:
+            manifest_data = json.loads(manifest)
+            filename = "manifest.json"
+            # Convert the manifest data back to a string to save it
+            manifest_str = json.dumps(manifest_data)
+            # Save the file
+            file_name = default_storage.save(filename, ContentFile(manifest_str))
+            # Create a IIIFManifest instance
+            manifest.file.delete()
+            manifest.file = file_name
+        
+            manifest.save()
+            messages.success(request, 'Manifest erfolgreich bearbeitet.')
+            return redirect('link', pk=manifest.pk)
+
     return render(request, 'main/link.html', context)
+
+
+def manifest_list(request):
+    manifests = IIIFManifest.objects.all()
+    return render(request, 'main/manifest_list.html', {'manifest': manifests, 'active': 'manifest_list'})
 
 
 

@@ -14,16 +14,19 @@
     <h3> IIIF ID Manifest-Link-Generator </h3> 
     <p> Dieses Tool generiert einen Link zu einem IIIF Manifest, der zBsp. in Mirador eingebunden werden kann. Dient als Playground ohne, dass sie einen Webserver starten müssten. </p>
     
-    <p> Das Eregebniss: {{link}} </p>
-
-    <textarea> 
-
-        {{manifest.manifest}}
-
-    </textarea>
-    
-
-    </div>
-
+    <br> <br> 
+    <form method="POST"> 
+        <div class="mb-3">
+            <label for="exampleFormControlTextarea1" class="form-label">Paste Manifest.JSON</label>
+            <textarea name="manifest" class="form-control" id="exampleFormControlTextarea1" rows="10">{{manifest.manifest}}</textarea>
+        </div>
+        
+        <h3> Link: <a href="{{manifest.file.url}}">  http://127.0.0.1:8000/{{link}} </a> </h3>
+        <div class="text-center"> 
+            <br>    
+            <button type="submit" class="btn btn-primary"> Bearbeiten </button> 
+        </div> 
+        </div>
+    </form> 
 </body>
 </html>
